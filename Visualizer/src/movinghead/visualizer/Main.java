@@ -1,7 +1,6 @@
 package movinghead.visualizer;
 
 import java.net.DatagramSocket;
-import java.net.SocketException;
 
 import processing.core.PApplet;
 
@@ -21,16 +20,21 @@ public class Main extends PApplet {
 	private static final String TILT_STRING = "TILT";
 	private Point colorCircleCenter, panCircleCenter, tiltCircleCenter;
 	private int circleRadius;
-	private int r, g, b;
+	private int r, g, b, dimmer;
 	private float panValue, tiltValue;
 	private DatagramSocket socket;
+	private ArtNetReceiver receiver;
+	
+	private final int ChPAN = 0;
+	private final int ChTILT = 1;
+	private final int ChCYAN = 2;
+	private final int ChMAGENTA = 3;
+	private final int ChYELLOW = 4;
+	private final int ChDIMMER = 5;
 
 	public Main() {
-		try {
-			socket = new DatagramSocket(ARTNET_PORT);
-		} catch (SocketException e) {
-			e.printStackTrace();
-		}
+		receiver = new ArtNetReceiver();
+		receiver.beginTransmition();	
 	}
 
 	public static void main(String args[]) {
@@ -56,13 +60,15 @@ public class Main extends PApplet {
 
 		clear();
 
-		r = 0x8C;
-		g = 0x04;
-		b = 0xA8;
-		panValue = frameCount % 100; // percent
-		tiltValue = frameCount % 72; // percent
+		//HERE ARE VALUES THAT SHOULD BE UPDATED
+		dimmer = receiver.getData(ChDIMMER);
+		r = receiver.getData(ChCYAN);
+		g = receiver.getData(ChMAGENTA);
+		b = receiver.getData(ChYELLOW);
+		panValue = receiver.getData(ChPAN) % 100; // percent
+		tiltValue = receiver.getData(ChTILT) % 100; // percent
 
-		fill(color(r, g, b));
+		fill(color(r, g, b), dimmer);
 		ellipse(colorCircleCenter.x, colorCircleCenter.y, circleRadius,
 				circleRadius);
 		fill(color(0x39, 0x14, 0xAF));
