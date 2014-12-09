@@ -41,10 +41,14 @@ public class MicrophoneHandler {
 			public void run() {
 				while (RECORDING) {
 					recorder.read(audioData, 0, RECORDER_SAMPLE_SIZE);
-					onDataReceived();
+//					Log.d(TAG, ""+audioData[0]);
 				}
 			}
 		}).start();
+	}
+	
+	public short[] getAudioData() {
+		return audioData;
 	}
 
 	public void stopRecoding() {
@@ -52,10 +56,6 @@ public class MicrophoneHandler {
 		recorder.stop();
 		recorder.release();
 		recorder = null;
-	}
-	
-	private void onDataReceived() {
-		
 	}
 	
 	

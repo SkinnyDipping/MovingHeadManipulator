@@ -68,6 +68,11 @@ public class ArtNet {
 	public void startTransmition() {
 		new Thread(transmitionThread).start();
 	}
+	
+	public void startTransmition(byte[] initialDMX) {
+		ArtNet.DMX = initialDMX;
+		new Thread(transmitionThread).start();
+	}
 
 	public void stopTransmition() {
 		transmitionThread.stop();

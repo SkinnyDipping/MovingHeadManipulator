@@ -106,8 +106,8 @@ public class SensorHandler implements SensorEventListener {
 		if (tilt < 0)
 			tilt = 0;
 
-		artnet.setDMX(Double.valueOf(pan).byteValue(), ControlActivity.ChPAN);
-		artnet.setDMX(Double.valueOf(tilt).byteValue(), ControlActivity.ChTILT);
+//		artnet.setDMX(Double.valueOf(pan).byteValue(), ControlActivity.ChPAN);
+//		artnet.setDMX(Double.valueOf(tilt).byteValue(), ControlActivity.ChTILT);
 	}
 
 	public void getAccelerometer() {
