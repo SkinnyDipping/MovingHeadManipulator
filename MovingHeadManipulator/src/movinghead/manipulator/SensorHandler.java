@@ -30,10 +30,6 @@ public class SensorHandler implements SensorEventListener {
 	private float[] orientation = { 0, 0, 0 };
 	private long timestamp = 0;
 
-	ArtNet artnet;
-
-	// TODO store data in synchronized(?) container
-
 	SensorHandler(Context context) {
 		m_sensorManager = (SensorManager) context
 				.getSystemService(Context.SENSOR_SERVICE);
@@ -43,11 +39,6 @@ public class SensorHandler implements SensorEventListener {
 				.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
 		m_sensorGyroscope = m_sensorManager
 				.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
-	}
-
-	SensorHandler(Context context, ArtNet artnet) {
-		this(context);
-		this.artnet = artnet;
 	}
 
 	public void start() throws Exception {
@@ -60,6 +51,7 @@ public class SensorHandler implements SensorEventListener {
 			Log.e(TAG, "Error registering sensors");
 			throw new Exception("SensoHandler: error registering sensors");
 		}
+		Log.i(TAG, "Sensors registered");
 	}
 
 	public void stop() {
@@ -86,6 +78,8 @@ public class SensorHandler implements SensorEventListener {
 		}
 
 		// Integrating gyroscope data
+		// TODO TEMP, remove after implementing Kalman filter
+		// TODO compendate OX axis rotation
 		if (timestamp != 0) {
 			final float dT = (event.timestamp - timestamp) * NS2S;
 			for (int i = 0; i < orientation.length; i++) {
@@ -106,8 +100,10 @@ public class SensorHandler implements SensorEventListener {
 		if (tilt < 0)
 			tilt = 0;
 
-//		artnet.setDMX(Double.valueOf(pan).byteValue(), ControlActivity.ChPAN);
-//		artnet.setDMX(Double.valueOf(tilt).byteValue(), ControlActivity.ChTILT);
+		//1 - field for PAN data
+		//2 - field for TILT data
+		ControlActivity.controlData[1] = pan;
+		ControlActivity.controlData[2] = tilt;
 	}
 
 	public void getAccelerometer() {
@@ -123,13 +119,12 @@ public class SensorHandler implements SensorEventListener {
 	}
 
 	public float[] getOrientation() {
-		return orientation;
+		// TODO
 	}
 
 	@Override
 	public void onAccuracyChanged(Sensor sensor, int accuracy) {
 		// TODO Auto-generated method stub
-
 	}
 
 }

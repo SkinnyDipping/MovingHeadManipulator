@@ -23,6 +23,7 @@ public class ArtNet {
 
 	private DatagramSocket socket;
 
+	//Unused
 	private class TransmitionThread implements Runnable {
 
 		private boolean running = true;
@@ -65,23 +66,28 @@ public class ArtNet {
 		}
 	}
 
+	//Unused
 	public void startTransmition() {
 		new Thread(transmitionThread).start();
 	}
 	
+	//Unused
 	public void startTransmition(byte[] initialDMX) {
 		ArtNet.DMX = initialDMX;
 		new Thread(transmitionThread).start();
 	}
 
+	//Unused
 	public void stopTransmition() {
 		transmitionThread.stop();
 	}
 	
+	//Unused
 	public void setDMX(byte[] DMX) {
 		this.DMX = DMX;
 	}
 	
+	//Unused
 	public void setDMX(byte DMX, int channel) {
 		this.DMX[channel] = DMX;
 	}
@@ -95,6 +101,7 @@ public class ArtNet {
 					socket.send(packet);
 				} catch (IOException e) {
 					e.printStackTrace();
+					Log.e(TAG,""+e);
 				}
 			}
 		}).start();
@@ -105,6 +112,7 @@ public class ArtNet {
 			sendPacket(generateArtDMX(DMX));
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
+			Log.e(TAG, ""+e);
 		}
 	}
 
@@ -113,6 +121,7 @@ public class ArtNet {
 			sendPacket(generateArtDMX(DMX, address));
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
+			Log.e(TAG, ""+e);
 		}
 	}
 

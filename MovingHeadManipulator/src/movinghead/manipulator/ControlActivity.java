@@ -22,6 +22,11 @@ public class ControlActivity extends Activity {
 	private static final String TAG = "ControlActivity";
 	private static final long CONTROL_THREAD_DELAY = 1000;
 
+	private enum ControlType {
+		NONE, MICROPHONE, SENSOR_AND_SCREEN, SCREEN
+	};
+	public static ControlType CONTROL_TYPE = ControlType.NONE;
+
 	private class ControlThread implements Runnable {
 
 		boolean isWorking = false;
@@ -30,8 +35,9 @@ public class ControlActivity extends Activity {
 		public void run() {
 			isWorking = true;
 			while (isWorking) {
-				Log.d(TAG, "" + controlData[0]);
-				// artnet.setDMX(dimmer, ChDIMMER);
+				Log.d(TAG, "Sending DMX...");
+				//artnet.sendPacket(createDMXTable(controlData));
+				Log.d(TAG, "DMX sent!");
 				try {
 					Thread.sleep(CONTROL_THREAD_DELAY);
 				} catch (InterruptedException e) {
@@ -43,6 +49,17 @@ public class ControlActivity extends Activity {
 
 		public final void stop() {
 			isWorking = false;
+		}
+
+		private byte[] createDMXTable(byte[] data) {
+			byte[] output = new byte[512];
+			output[ChDIMMER] = data[0];
+			output[ChPAN] = data[1];
+			output[ChTILT] = data[2];
+			output[ChRED] = data[3];
+			output[ChGREEN] = data[4];
+			output[ChBLUE] = data[5];
+			return output;
 		}
 	}
 
@@ -57,6 +74,7 @@ public class ControlActivity extends Activity {
 		@Override
 		public void onProgressChanged(SeekBar seekBar, int progress,
 				boolean fromUser) {
+			if(CONTROL_TYPE == ControlType.SENSOR_AND_SCREEN || CONTROL_TYPE == ControlType.SCREEN)
 			controlData[CONTROL_PROPETRY] = (byte) progress;
 		}
 
@@ -81,9 +99,14 @@ public class ControlActivity extends Activity {
 	private SensorHandler sensors;
 	private MicrophoneHandler microphone;
 
-	private enum ControlType {
-		NONE, MICROPHONE, SENSOR_AND_SCREEN, SCREEN
-	};
+	// DMX512 channels
+	public static final int ChDIMMER = 0;
+	public static final int ChPAN = 1;
+	public static final int ChTILT = 2;
+	public static final int ChRED = 3;
+	public static final int ChGREEN = 4;
+	public static final int ChBLUE = 5;
+
 
 // @formatter:off 
 	/**
@@ -110,24 +133,22 @@ public class ControlActivity extends Activity {
 			vibrator.vibrate(10);
 			if (isChecked)
 				try {
+					CONTROL_TYPE = ControlType.SCREEN;
 					// sensors.start();
 					startBars();
-					// artnet.startTransmition();
-					// controlType = ControlType.MICROPHONE;
 					// microphone.startRecording();
 					new Thread(CONTROL_THREAD).start();
 				} catch (Exception e) {
+					CONTROL_TYPE = ControlType.NONE;
 					e.printStackTrace();
 					stopBars();
 					// artnet.stopTransmition();
 				}
 			else if (!isChecked) {
+				CONTROL_TYPE = ControlType.NONE;
 				CONTROL_THREAD.stop();
-				// controlThread.
-				// controlType = ControlType.NONE;
 				// sensors.stop();
 				stopBars();
-				// artnet.stopTransmition();
 				// microphone.stopRecoding();
 			}
 
@@ -189,6 +210,9 @@ public class ControlActivity extends Activity {
 	@Override
 	public void onPause() {
 		super.onPause();
+		/* TODO
+			Turn control off i.e. perform "switchOff" operation
+		*/
 	}
 
 	@Override
