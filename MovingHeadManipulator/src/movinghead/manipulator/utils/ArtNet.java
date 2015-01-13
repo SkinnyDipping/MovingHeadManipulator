@@ -22,6 +22,8 @@ public class ArtNet {
 	private static byte[] DMX = new byte[512];
 
 	private DatagramSocket socket;
+	
+	private byte sequence = 0; //TODO
 
 	//Unused
 	private class TransmitionThread implements Runnable {
@@ -58,7 +60,7 @@ public class ArtNet {
 	}
 	TransmitionThread transmitionThread = new TransmitionThread();
 
-	public ArtNet() {
+	public ArtNet() {		
 		try {
 			socket = new DatagramSocket(DEFAULT_PORT);
 		} catch (SocketException e) {
@@ -68,6 +70,7 @@ public class ArtNet {
 
 	//Unused
 	public void startTransmition() {
+		sequence = 0;
 		new Thread(transmitionThread).start();
 	}
 	

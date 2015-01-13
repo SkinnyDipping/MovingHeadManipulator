@@ -4,58 +4,6 @@
     android:layout_height="match_parent"
     android:background="@drawable/background" >
 
-    <Switch
-        android:id="@+id/startSwitch"
-        android:layout_width="wrap_content"
-        android:layout_height="20dp"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="100dp"
-        android:textColor="@color/RED"
-        android:textOff="OFF"
-        android:textOn="ON!"
-        android:textSize="20sp" />
-    
-    <SeekBar
-        android:id="@+id/dimmerBar"
-        android:layout_width="300dp"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/startSwitch"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="62dp" />
-
-    <Button
-        android:id="@+id/resetButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/dimmerBar"
-        android:layout_alignParentLeft="true"
-        android:layout_marginLeft="75dp"
-        android:layout_marginTop="50dp"
-        android:text="@string/resetButton"
-        android:textSize="20sp"
-        android:textColor="@color/CYAN" />
-    
-    <ToggleButton
-        android:id="@+id/pauseButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
-        android:layout_below="@+id/dimmerBar"
-        android:layout_marginRight="75dp"
-        android:textSize="20sp"
-        android:layout_marginTop="50dp"
-        android:textOn="Resume"
-        android:textOff="@string/pauseButton"
-        android:textColor="@color/CYAN" />
-
-    <SeekBar
-        android:id="@+id/cyanBar"
-        android:layout_width="200dp"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/resetButton"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="50dp" />
-
     <SeekBar
         android:id="@+id/magentaBar"
         android:layout_width="200dp"
@@ -72,6 +20,43 @@
         android:layout_centerHorizontal="true"
         android:layout_marginTop="15dp" />
 
-    
+    <Switch
+        android:id="@+id/startSwitch"
+        android:layout_width="wrap_content"
+        android:layout_height="20dp"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="93dp"
+        android:textColor="@color/RED"
+        android:textOff="OFF"
+        android:textOn="ON!"
+        android:textSize="50sp" />
+
+    <SeekBar
+        android:id="@+id/dimmerBar"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/startSwitch"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="69dp" />
+
+    <SeekBar
+        android:id="@+id/cyanBar"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/magentaBar"
+        android:layout_below="@+id/dimmerBar"
+        android:layout_marginTop="64dp" />
+
+    <ToggleButton
+        android:id="@+id/toggleButton1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/yellowBar"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="50dp"
+        android:text="@string/music_processor_button_onoff"
+        android:textOn="@string/music_processor_button_onoff"
+        android:textOff="@string/music_processor_button_onoff" />
 
 </RelativeLayout>

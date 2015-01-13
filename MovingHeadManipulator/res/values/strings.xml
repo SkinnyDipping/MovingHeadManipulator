@@ -18,5 +18,6 @@
     <string name="resetButton">RESET</string>
     <string name="pauseButton">PAUSE</string>
     <string name="title_activity_screen_control">ScreenControlActivity</string>
+    <string name="music_processor_button_onoff">Music Processor</string>
 
 </resources>

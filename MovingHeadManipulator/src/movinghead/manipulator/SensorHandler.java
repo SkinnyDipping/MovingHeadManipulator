@@ -49,7 +49,7 @@ public class SensorHandler implements SensorEventListener {
 				&& m_sensorManager.registerListener(this, m_sensorGyroscope,
 						SensorManager.SENSOR_DELAY_GAME) == false) {
 			Log.e(TAG, "Error registering sensors");
-			throw new Exception("SensoHandler: error registering sensors");
+			throw new Exception("SensorHandler: error registering sensors");
 		}
 		Log.i(TAG, "Sensors registered");
 	}
@@ -100,10 +100,11 @@ public class SensorHandler implements SensorEventListener {
 		if (tilt < 0)
 			tilt = 0;
 
+		
 		//1 - field for PAN data
 		//2 - field for TILT data
-		ControlActivity.controlData[1] = pan;
-		ControlActivity.controlData[2] = tilt;
+		ControlActivity.controlData[1] = (byte) pan;
+		ControlActivity.controlData[2] = (byte) tilt;
 	}
 
 	public void getAccelerometer() {
@@ -119,6 +120,7 @@ public class SensorHandler implements SensorEventListener {
 	}
 
 	public float[] getOrientation() {
+		return null;
 		// TODO
 	}
 

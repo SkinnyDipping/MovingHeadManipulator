@@ -20,12 +20,7 @@ public class ControlActivity extends Activity {
 
 	public static final long VIBRATOR_MILIS = 100;
 	private static final String TAG = "ControlActivity";
-	private static final long CONTROL_THREAD_DELAY = 1000;
-
-	private enum ControlType {
-		NONE, MICROPHONE, SENSOR_AND_SCREEN, SCREEN
-	};
-	public static ControlType CONTROL_TYPE = ControlType.NONE;
+	private static final long CONTROL_THREAD_DELAY = 1;
 
 	private class ControlThread implements Runnable {
 
@@ -35,9 +30,7 @@ public class ControlActivity extends Activity {
 		public void run() {
 			isWorking = true;
 			while (isWorking) {
-				Log.d(TAG, "Sending DMX...");
-				//artnet.sendPacket(createDMXTable(controlData));
-				Log.d(TAG, "DMX sent!");
+				mArtnet.sendPacket(createDMXTable(controlData));
 				try {
 					Thread.sleep(CONTROL_THREAD_DELAY);
 				} catch (InterruptedException e) {
@@ -74,13 +67,14 @@ public class ControlActivity extends Activity {
 		@Override
 		public void onProgressChanged(SeekBar seekBar, int progress,
 				boolean fromUser) {
-			if(CONTROL_TYPE == ControlType.SENSOR_AND_SCREEN || CONTROL_TYPE == ControlType.SCREEN)
-			controlData[CONTROL_PROPETRY] = (byte) progress;
+			if (CONTROL_TYPE == ControlType.SENSOR_AND_SCREEN
+					|| CONTROL_TYPE == ControlType.SCREEN)
+				controlData[CONTROL_PROPETRY] = (byte) progress;
 		}
 
 		@Override
 		public void onStartTrackingTouch(SeekBar seekBar) {
-			vibrator.vibrate(ControlActivity.VIBRATOR_MILIS);
+			mVibrator.vibrate(ControlActivity.VIBRATOR_MILIS);
 		}
 
 		@Override
@@ -91,22 +85,21 @@ public class ControlActivity extends Activity {
 	// GUI objects
 	private Switch switchOn;
 	private SeekBar dimBar, cyanBar, magentaBar, yellowBar;
-	private ToggleButton pauseButton;
-	private Button resetButton;
+	private ToggleButton musicProcessorSwitch;
 
-	private ArtNet artnet;
-	private Vibrator vibrator;
-	private SensorHandler sensors;
-	private MicrophoneHandler microphone;
+	private ArtNet mArtnet;
+	private Vibrator mVibrator;
+	private SensorHandler mSensors;
+	// private MicrophoneHandler mMicrophone;
+	private MusicProcessor mMusicProcessor;
 
 	// DMX512 channels
-	public static final int ChDIMMER = 0;
-	public static final int ChPAN = 1;
-	public static final int ChTILT = 2;
-	public static final int ChRED = 3;
-	public static final int ChGREEN = 4;
-	public static final int ChBLUE = 5;
-
+	public static final int ChDIMMER = 5;
+	public static final int ChPAN = 0;
+	public static final int ChTILT = 1;
+	public static final int ChRED = 2;
+	public static final int ChGREEN = 3;
+	public static final int ChBLUE = 4;
 
 // @formatter:off 
 	/**
@@ -120,9 +113,69 @@ public class ControlActivity extends Activity {
 	 */
 	public volatile static byte[] controlData = new byte[6];
 // @formatter:on
-	private final byte[] HOME_SETTINGS = { 127, 0, 0, 127, 127, 127 };
+	private final byte[] HOME_SETTINGS = { 0, 0, 0, 127, 127, 127 };
 
+	 private static ControlType CONTROL_TYPE = ControlType.MICROPHONE;
+//	private static ControlType CONTROL_TYPE = ControlType.SENSOR_AND_SCREEN;
 	private final ControlThread CONTROL_THREAD = new ControlThread();
+
+	private void controlTypeChange(ControlType newControlType) throws Exception {
+
+		Log.i(TAG, "controlTypeChange: terminating control");
+		switch (CONTROL_TYPE) {
+		case MICROPHONE:
+			mMusicProcessor.stopProcessing();
+			Log.i(TAG, "Microphone control terminated");
+			break; //TODO USUNAC
+		case SENSOR_AND_SCREEN:
+			mSensors.stop();
+			Log.i(TAG, "Sensor&Screen control terminated");
+			break;
+		case OFF:
+			Log.i(TAG, "Control thread already off. Nothing happened");
+			break;
+		default:
+			Log.i(TAG, "Control terminated");
+			break;
+		}
+		CONTROL_THREAD.stop();
+
+		mVibrator.vibrate(10);
+		CONTROL_TYPE = newControlType;
+
+		Log.i(TAG, "controlTypeChange: Initializing control");
+		switch (CONTROL_TYPE) {
+		case SCREEN:
+			dimBar.setProgress(0);
+			cyanBar.setProgress(255);
+			magentaBar.setProgress(255);
+			yellowBar.setProgress(255);
+			Log.i(TAG, "Control initiated");
+			break;
+		case MICROPHONE:
+			Log.i(TAG, "Microphone control initiated");
+			mMusicProcessor.startProcessing();
+			break; //TODO USUNAC
+		case SENSOR_AND_SCREEN:
+			try {
+				mSensors.start();
+			} catch (Exception e) {
+				mSensors.stop();
+				Log.e(TAG, e + "\nWork terminated");
+				throw new Exception("Failed to initialize SENSOR_AND_SCREEN control");
+			}
+			dimBar.setProgress(0);
+			cyanBar.setProgress(255);
+			magentaBar.setProgress(255);
+			yellowBar.setProgress(255);
+			Log.i(TAG, "Sensor&Screen control initiated");
+			break;
+		default:
+			break;
+		}
+		new Thread(CONTROL_THREAD).start();
+
+	}
 
 	private class SwitchButtonListener implements
 			CompoundButton.OnCheckedChangeListener {
@@ -130,40 +183,61 @@ public class ControlActivity extends Activity {
 		@Override
 		public void onCheckedChanged(CompoundButton buttonView,
 				boolean isChecked) {
-			vibrator.vibrate(10);
-			if (isChecked)
-				try {
-					CONTROL_TYPE = ControlType.SCREEN;
-					// sensors.start();
-					startBars();
-					// microphone.startRecording();
-					new Thread(CONTROL_THREAD).start();
-				} catch (Exception e) {
-					CONTROL_TYPE = ControlType.NONE;
-					e.printStackTrace();
-					stopBars();
-					// artnet.stopTransmition();
+			mVibrator.vibrate(10);
+			if (isChecked) {
+
+				switch (CONTROL_TYPE) {
+				case SCREEN:
+					setInitBars();
+					Log.i(TAG, "Control initiated");
+					break;
+				case SENSOR_AND_SCREEN:
+					try {
+						mSensors.start();
+					} catch (Exception e) {
+						mSensors.stop();
+						switchOn.setChecked(false);
+						Log.e(TAG, e + "\nWork terminated");
+						return;
+					}
+					setInitBars();
+					Log.i(TAG, "Sensor&Screen control initiated");
+					break;
+				case MICROPHONE:
+					Log.i(TAG, "Microphone control initiated");
+					mMusicProcessor.startProcessing();
+					break;
+				default:
+					break;
 				}
-			else if (!isChecked) {
-				CONTROL_TYPE = ControlType.NONE;
+				new Thread(CONTROL_THREAD).start();
+
+			} else if (!isChecked) {
+
+				switch (CONTROL_TYPE) {
+				case SENSOR_AND_SCREEN:
+					mSensors.stop();
+					Log.i(TAG, "Sensor&Screen control terminated");
+					break;
+				case MICROPHONE:
+					mMusicProcessor.stopProcessing();
+					Log.i(TAG, "Microphone control terminated");
+					break;
+				default:
+					Log.i(TAG, "Control terminated");
+					break;
+				}
 				CONTROL_THREAD.stop();
-				// sensors.stop();
-				stopBars();
-				// microphone.stopRecoding();
 			}
 
 		}
 
-		private void startBars() {
+		private void setInitBars() {
 			dimBar.setProgress(0);
 			cyanBar.setProgress(255);
 			magentaBar.setProgress(255);
 			yellowBar.setProgress(255);
 		}
-
-		private void stopBars() {
-		}
-
 	}
 
 	@Override
@@ -171,30 +245,32 @@ public class ControlActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_control);
 
-		artnet = new ArtNet();
-		vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-		sensors = new SensorHandler(getApplicationContext(), artnet);
-		microphone = new MicrophoneHandler(artnet);
+		mArtnet = new ArtNet();
+		mVibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+		mSensors = new SensorHandler(getApplicationContext());
+		mMusicProcessor = new MusicProcessor();
 
 		dimBar = (SeekBar) findViewById(R.id.dimmerBar);
 		cyanBar = (SeekBar) findViewById(R.id.cyanBar);
 		magentaBar = (SeekBar) findViewById(R.id.magentaBar);
 		yellowBar = (SeekBar) findViewById(R.id.yellowBar);
 		switchOn = (Switch) findViewById(R.id.startSwitch);
-		pauseButton = (ToggleButton) findViewById(R.id.pauseButton);
-		resetButton = (Button) findViewById(R.id.resetButton);
 
 		controlData = HOME_SETTINGS;
 
-		switchOn.setOnCheckedChangeListener(new SwitchButtonListener());
-
-		resetButton.setOnClickListener(new OnClickListener() {
-
-			@Override
-			public void onClick(View v) {
-				vibrator.vibrate(VIBRATOR_MILIS);
-			}
-		});
+		 switchOn.setOnCheckedChangeListener(new SwitchButtonListener());
+//		switchOn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+//
+//			@Override
+//			public void onCheckedChanged(CompoundButton buttonView,
+//					boolean isChecked) {
+//				try {
+//					controlTypeChange(CONTROL_TYPE);
+//				} catch (Exception e) {
+//					e.printStackTrace();
+//				}
+//			}
+//		});
 
 		dimBar.setMax(255);
 		dimBar.setOnSeekBarChangeListener(new SeekBarListener(0));
@@ -210,9 +286,9 @@ public class ControlActivity extends Activity {
 	@Override
 	public void onPause() {
 		super.onPause();
-		/* TODO
-			Turn control off i.e. perform "switchOff" operation
-		*/
+		/*
+		 * TODO Turn control off i.e. perform "switchOff" operation
+		 */
 	}
 
 	@Override
@@ -223,5 +299,9 @@ public class ControlActivity extends Activity {
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		return false;
+	}
+
+	public ControlType getControlType() {
+		return CONTROL_TYPE;
 	}
 }
